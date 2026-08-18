@@ -80,8 +80,12 @@ export function SignIn() {
         </svg>
         <h1>Check your email</h1>
         <p>
-          We sent a sign-in link to <strong>{sentTo}</strong>. Open it on
-          this device to continue.
+          We sent a sign-in link to <strong>{sentTo}</strong>. Open it from
+          any device to continue.
+        </p>
+        <p className="hint">
+          Don't see it? Check your spam or junk folder — it can land there
+          the first time.
         </p>
         <button
           type="button"
