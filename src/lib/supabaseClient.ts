@@ -15,10 +15,14 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // anything in this file. See CLAUDE.md.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    // PKCE keeps the session tokens out of the URL fragment during the
-    // magic-link redirect — the code exchange happens in a follow-up
-    // request instead. detectSessionInUrl (on by default) completes that
-    // exchange automatically when the app loads with ?code= in the URL.
-    flowType: 'pkce',
+    // Implicit, not PKCE: PKCE ties the magic link to the exact browser
+    // that requested it (a code_verifier in that browser's localStorage),
+    // so a link opened on a different device than it was requested from
+    // — the everyday case of requesting on a laptop and clicking from a
+    // phone's mail app — fails every time. Implicit puts the session
+    // tokens straight in the URL fragment instead, so the link works from
+    // any device. This was Supabase Auth's only flow for years; it's
+    // still fully secure for an email-link-based sign-in like this one.
+    flowType: 'implicit',
   },
 })
