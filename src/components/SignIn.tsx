@@ -43,9 +43,31 @@ export function SignIn() {
   if (sentTo) {
     return (
       <div className="card confirm">
-        <div className="icon" aria-hidden="true">
-          ✉️
-        </div>
+        <svg
+          className="icon"
+          width="36"
+          height="28"
+          viewBox="0 0 36 28"
+          fill="none"
+          aria-hidden="true"
+        >
+          <rect
+            x="1.5"
+            y="1.5"
+            width="33"
+            height="25"
+            rx="1.5"
+            stroke="currentColor"
+            strokeWidth="1.6"
+          />
+          <path
+            d="M2.5 3L18 16L33.5 3"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
         <h1>Check your email</h1>
         <p>
           We sent a sign-in link to <strong>{sentTo}</strong>. Open it on

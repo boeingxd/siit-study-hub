@@ -1,32 +1,58 @@
+/* Engineering Lab Notebook — component layer.
+   Signature mechanism: a "highlighter mark" — a rough-edged accent-mark
+   fill sitting behind fixed-dark-ink text — carries every primary action.
+   Structure comes from ruled hairlines and the fixed red margin rule in
+   index.css, never from colored left borders or card shadows. */
+
 .page {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--space-6) var(--space-4);
+  padding: var(--space-7) var(--space-5) var(--space-7) calc(var(--margin-inset) + var(--space-6));
+  /* Ruled texture belongs here, not on dense content screens — the auth
+     card is the only surface sparse enough for it to read as paper rather
+     than compete with real row/section dividers. */
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 31px,
+    var(--rule) 31px,
+    var(--rule) 32px
+  );
 }
 
 .brand {
   font-family: var(--mono);
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: var(--space-5);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  margin-bottom: var(--space-6);
+  position: relative;
+  display: inline-block;
+}
+
+.brand::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  bottom: 1px;
+  height: 0.4em;
+  background: var(--accent-mark);
+  z-index: -1;
+  opacity: 0.85;
 }
 
 .card {
   width: 100%;
   max-width: 400px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: var(--space-6);
 }
 
 .card h1 {
-  font-size: 22px;
+  font-size: 21px;
 }
 
 .card .lede {
@@ -37,21 +63,35 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
 }
 
 .field label {
-  font-size: 13px;
+  font-family: var(--mono);
+  font-size: 12px;
   font-weight: 600;
+  letter-spacing: 0.03em;
   color: var(--ink-muted);
 }
 
 .field input {
-  padding: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: calc(var(--radius) - 4px);
-  background: var(--paper);
+  padding: var(--space-2) var(--space-1);
+  border: none;
+  border-bottom: 1.5px solid var(--rule-strong);
+  border-radius: 0;
+  background: transparent;
   color: var(--ink);
+}
+
+.field input::placeholder {
+  color: var(--ink-muted);
+  opacity: 0.7;
+}
+
+.field input:focus-visible {
+  outline: none;
+  border-bottom-color: var(--accent);
+  box-shadow: 0 1.5px 0 0 var(--accent);
 }
 
 .field input.mono {
@@ -65,41 +105,81 @@
 
 .field-row {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 .field-row .field {
   flex: 1;
 }
 
+/* The highlighter mark — the one recurring signature moment. This is a
+   mark ON the label, not a filled button: the stripe covers roughly the
+   text's own height, never the button's full padded box, so it reads as
+   "this phrase is highlighted," not "this is a colored rectangle." */
 .btn-primary {
+  position: relative;
   width: 100%;
-  padding: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border: none;
-  border-radius: calc(var(--radius) - 4px);
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-weight: 600;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 15px;
+  isolation: isolate;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 24%;
+  height: 40%;
+  background: var(--accent-mark);
+  clip-path: polygon(1% 18%, 99% 4%, 100% 84%, 2% 96%);
+  z-index: -1;
+  transition: clip-path 0.15s ease-out, transform 0.15s ease-out;
+}
+
+.btn-primary:hover::before,
+.btn-primary:focus-visible::before {
+  clip-path: polygon(0.5% 8%, 99% 12%, 99.5% 90%, 1% 84%);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active::before {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled::before {
+  opacity: 0.5;
 }
 
 .btn-secondary {
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: calc(var(--radius) - 4px);
+  border: 1.5px solid var(--rule-strong);
+  border-radius: var(--radius);
   background: transparent;
   color: var(--ink-muted);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent);
+  color: var(--ink);
 }
 
 .error {
   display: block;
   background: var(--danger-bg);
   color: var(--danger);
-  border-radius: calc(var(--radius) - 4px);
+  border-radius: var(--radius);
   padding: var(--space-3);
   font-size: 14px;
   margin-bottom: var(--space-4);
+  border-left: 1px solid var(--danger);
 }
 
 .confirm {
@@ -107,8 +187,8 @@
 }
 
 .confirm .icon {
-  font-size: 32px;
   margin-bottom: var(--space-3);
+  color: var(--accent);
 }
 
 .signed-in {
@@ -127,6 +207,7 @@
 .loading-dot {
   color: var(--ink-muted);
   font-family: var(--mono);
+  font-size: 13px;
 }
 
 /* App shell (post sign-in) ------------------------------------------------ */
@@ -139,15 +220,17 @@
 
 .shell-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-5);
-  border-bottom: 1px solid var(--border);
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-4) var(--space-5) var(--space-4) calc(var(--margin-inset) + var(--space-5));
+  border-bottom: 1px solid var(--rule);
 }
 
 .shell-header .brand {
   margin: 0;
+  white-space: nowrap;
 }
 
 .shell-header .who {
@@ -156,6 +239,7 @@
   gap: var(--space-3);
   font-size: 14px;
   color: var(--ink-muted);
+  white-space: nowrap;
 }
 
 .shell-header .handle {
@@ -167,55 +251,59 @@
 .shell-main {
   flex: 1;
   width: 100%;
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
-  padding: var(--space-6) var(--space-4);
+  padding: var(--space-6) var(--space-5) var(--space-7) calc(var(--margin-inset) + var(--space-5));
 }
 
 /* Course list -------------------------------------------------------------- */
 
 .search-field {
   width: 100%;
-  padding: var(--space-3);
-  margin-bottom: var(--space-5);
-  border: 1px solid var(--border);
-  border-radius: calc(var(--radius) - 4px);
-  background: var(--surface);
+  padding: var(--space-2) 0;
+  margin-bottom: var(--space-6);
+  border: none;
+  border-bottom: 1.5px solid var(--rule-strong);
+  background: transparent;
   color: var(--ink);
+  font-size: 15px;
+}
+
+.search-field::placeholder {
+  color: var(--ink-muted);
+}
+
+.search-field:focus-visible {
+  outline: none;
+  border-bottom-color: var(--accent);
+  box-shadow: 0 1.5px 0 0 var(--accent);
 }
 
 .course-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
 }
 
 .course-row {
   display: flex;
   align-items: baseline;
   gap: var(--space-4);
-  padding: var(--space-4);
+  padding: var(--space-3) var(--space-2);
   text-decoration: none;
   color: inherit;
-  border-bottom: 1px solid var(--border);
-}
-
-.course-row:last-child {
-  border-bottom: none;
+  border-bottom: 1px solid var(--rule);
 }
 
 .course-row:hover,
 .course-row:focus-visible {
-  background: var(--paper);
+  background: linear-gradient(to right, rgba(191, 215, 48, 0.2), rgba(191, 215, 48, 0) 70%);
 }
 
 .course-row .code {
   font-family: var(--mono);
   font-weight: 700;
-  color: var(--accent);
+  color: var(--ink);
   white-space: nowrap;
   min-width: 4.5em;
 }
@@ -228,77 +316,94 @@
 .course-row .credits {
   font-size: 13px;
   color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .empty-note {
-  padding: var(--space-5);
-  text-align: center;
+  padding: var(--space-6) 0;
   color: var(--ink-muted);
+  border-top: 1px dashed var(--rule-strong);
 }
 
 /* Course page --------------------------------------------------------------- */
 
 .back-link {
   display: inline-block;
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
   color: var(--ink-muted);
-  font-size: 14px;
+  font-size: 13px;
+  font-family: var(--mono);
   text-decoration: none;
 }
 
 .back-link:hover {
-  color: var(--ink);
+  color: var(--accent);
 }
 
 .course-header .code {
   font-family: var(--mono);
   font-weight: 700;
-  color: var(--accent);
-  font-size: 14px;
+  color: var(--ink);
+  font-size: 13px;
   letter-spacing: 0.04em;
 }
 
 .course-header h1 {
-  font-size: 24px;
+  font-size: 23px;
   margin: var(--space-1) 0 var(--space-2);
 }
 
 .course-header .meta {
   font-size: 14px;
   color: var(--ink-muted);
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-6);
+  font-variant-numeric: tabular-nums;
 }
 
+/* Tabs as physical index dividers — separate small tabs that sit pushed
+   back until selected, not a connected, flush-edged tab bar. Each is its
+   own card with its own border and shadow; nothing shares an edge. */
 .tabs {
   display: flex;
   gap: var(--space-2);
-  border-bottom: 1px solid var(--border);
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-4);
 }
 
 .tab {
-  padding: var(--space-3) var(--space-2);
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
+  padding: var(--space-2) var(--space-4);
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
   color: var(--ink-muted);
+  font-family: var(--mono);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
+  position: relative;
+  top: 4px;
+  box-shadow: 0 1px 2px rgba(36, 39, 43, 0.08);
+  transition: top 0.12s ease-out, box-shadow 0.12s ease-out;
 }
 
 .tab[aria-selected='true'] {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+  background: var(--accent-mark);
+  border-color: var(--accent-mark);
+  color: var(--accent-mark-ink);
+  top: 0;
+  box-shadow: 0 3px 6px rgba(36, 39, 43, 0.18);
+}
+
+.tab-panel {
+  padding-top: var(--space-2);
 }
 
 .tab-panel .empty-state {
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-  padding: var(--space-6);
-  text-align: center;
+  padding: var(--space-6) 0;
+  border-top: 1px dashed var(--rule-strong);
+  text-align: left;
 }
 
 .tab-panel .empty-state p {
   margin: 0;
+  max-width: 46ch;
 }

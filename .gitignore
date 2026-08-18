@@ -33,3 +33,11 @@ pnpm-debug.log*
 /playwright-report
 /blob-report
 /playwright/.cache
+/.playwright-mcp
+
+# Impeccable design skill — ephemeral working state (review screenshots,
+# hook cache, decision-page logs). design.json (the DESIGN.md sidecar)
+# and DESIGN.md itself are the durable record and stay tracked.
+.impeccable/review/
+.impeccable/questions/
+.impeccable/hook.cache.json

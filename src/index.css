@@ -1,22 +1,42 @@
-/* Design tokens ------------------------------------------------------------
-   A light, intentional pass for Phase 2 (auth). Course-code data (handles,
-   course codes) reads in the mono face — a small nod to the subject matter.
-   No web fonts are loaded: system faces keep the auth flow fast and free of
-   layout shift, and heading personality comes from weight/tracking instead. */
+/* ---------------------------------------------------------------------------
+   Design system: Engineering Lab Notebook.
+   Direction contract lives in index.html (first child of <body>). Course
+   codes and headings are set in a self-hosted JetBrains Mono — the display
+   voice of this world, not a "technical" costume: it's the same face a DE
+   student's own IDE and lab reports already use. Body/UI chrome stays on a
+   system sans, restrained per Operate mode. One accent (a highlighter
+   yellow-green) marks the interactive surface; nothing else is saturated.
+   A fixed red margin rule — the literal line on ruled paper — is the one
+   persistent structural device, present on every screen including "Loading…".
+   --------------------------------------------------------------------------- */
+
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/600.css';
+@import '@fontsource/jetbrains-mono/700.css';
+
 :root {
-  --ink: #1b1f2a;
-  --ink-muted: #5b6472;
-  --paper: #f5f6f4;
-  --surface: #ffffff;
-  --border: #e1e4e0;
-  --accent: #0f7b6c;
-  --accent-ink: #ffffff;
+  --paper: #fbfbf9;
+  --ink: #24272b;
+  --ink-muted: #5b6169;
+  --rule: #d8dee8;
+  --rule-strong: #b9c2d0;
+  /* Two accent roles, deliberately different luminance: --accent reads
+     directly against paper (links, active-tab line, icons, focus ring —
+     4.84:1, clears the 4.5:1 floor for small text) and --accent-mark is
+     the bright highlighter fill that only ever sits behind fixed dark ink
+     text (::selection, mark strokes) — never used as a text or line color
+     on its own, since that pairing fails contrast. */
+  --accent: #6b7519;
+  --accent-mark: #bfd730;
+  --accent-mark-ink: #1a1d0f;
+  --margin: #c0392b;
   --danger: #b3261e;
   --danger-bg: #fbeceb;
-  --focus-ring: #0f7b6c;
+  --focus-ring: #6b7519;
 
+  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -26,23 +46,26 @@
   --space-6: 32px;
   --space-7: 48px;
 
-  --radius: 10px;
+  --margin-inset: 28px;
+  --radius: 3px;
 
   color-scheme: light dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --ink: #edeff2;
-    --ink-muted: #a7afbb;
-    --paper: #12151a;
-    --surface: #181c22;
-    --border: #262b33;
-    --accent: #35c9a5;
-    --accent-ink: #0b1210;
+    --paper: #1c1d1a;
+    --ink: #e9e8e2;
+    --ink-muted: #9a9d95;
+    --rule: #3a3c37;
+    --rule-strong: #4c4f48;
+    --accent: #d4ea4f;
+    --accent-mark: #d4ea4f;
+    --accent-mark-ink: #1a1d0f;
+    --margin: #e0574a;
     --danger: #ff8a80;
     --danger-bg: #3a1c1a;
-    --focus-ring: #35c9a5;
+    --focus-ring: #d4ea4f;
   }
 }
 
@@ -59,9 +82,24 @@ body {
 body {
   background: var(--paper);
   color: var(--ink);
-  font: 16px/1.5 var(--sans);
+  font: 16px/1.55 var(--sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  position: relative;
+}
+
+/* The margin rule: the one line on ruled paper, always present. */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: var(--margin-inset);
+  width: 1.5px;
+  background: var(--margin);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 1;
 }
 
 #root {
@@ -73,8 +111,9 @@ body {
 h1,
 h2,
 h3 {
+  font-family: var(--mono);
   color: var(--ink);
-  font-weight: 650;
+  font-weight: 700;
   letter-spacing: -0.01em;
   margin: 0 0 var(--space-2);
 }
@@ -95,12 +134,45 @@ button {
 
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.55;
+}
+
+a {
+  color: var(--ink);
 }
 
 :focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+/* Browser surfaces carry the world too. */
+::selection {
+  background: var(--accent-mark);
+  color: var(--accent-mark-ink);
+}
+
+* {
+  scrollbar-color: var(--rule-strong) transparent;
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--rule-strong);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 @media (prefers-reduced-motion: reduce) {

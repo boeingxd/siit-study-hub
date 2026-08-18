@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import type { Course } from '../lib/types'
+import { BackArrowIcon } from './icons'
 
 interface ExamIntelRow {
   id: string
@@ -81,7 +82,8 @@ export function CoursePage() {
     return (
       <div>
         <Link to="/" className="back-link">
-          ← Back to courses
+          <BackArrowIcon />
+          Back to courses
         </Link>
         <p className="empty-note">
           No course found for “{code}”. Check the code and try again.
@@ -93,7 +95,8 @@ export function CoursePage() {
   return (
     <div>
       <Link to="/" className="back-link">
-        ← Back to courses
+        <BackArrowIcon />
+        Back to courses
       </Link>
       <div className="course-header">
         <div className="code">{course.code}</div>

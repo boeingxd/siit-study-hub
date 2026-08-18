@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-18T00:00:00Z",
+  "title": "Design System: SIIT Study Hub",
+  "extensions": {
+    "colorMeta": {
+      "paper": { "role": "neutral", "displayName": "Paper", "canonical": "#fbfbf9", "tonalRamp": ["#1c1d1a", "#2c2d29", "#4c4f48", "#8b8e87", "#c7c9c1", "#e9e8e2", "#f4f3ee", "#fbfbf9"] },
+      "ink": { "role": "neutral", "displayName": "Graphite Ink", "canonical": "#24272b", "tonalRamp": ["#15171a", "#24272b", "#3a3e43", "#5b6169", "#828892", "#aeb3ba", "#d8dee8", "#fbfbf9"] },
+      "ink-muted": { "role": "neutral", "displayName": "Muted Ink", "canonical": "#5b6169", "tonalRamp": ["#24272b", "#3a3e43", "#5b6169", "#767c85", "#959aa2", "#b9c2d0", "#d8dee8", "#fbfbf9"] },
+      "rule": { "role": "neutral", "displayName": "Hairline Rule", "canonical": "#d8dee8", "tonalRamp": ["#3a3c37", "#4c4f48", "#7f8790", "#b9c2d0", "#cbd2dd", "#d8dee8", "#e9edf2", "#fbfbf9"] },
+      "rule-strong": { "role": "neutral", "displayName": "Strong Rule", "canonical": "#b9c2d0", "tonalRamp": ["#3a3e43", "#5b6169", "#828892", "#9aa2ac", "#b9c2d0", "#cbd2dd", "#e0e5eb", "#fbfbf9"] },
+      "accent": { "role": "primary", "displayName": "Accent Ink", "canonical": "#6b7519", "tonalRamp": ["#2a2d0a", "#3d420e", "#525a12", "#6b7519", "#8a962a", "#aab947", "#cbdb85", "#e9f3c6"] },
+      "accent-mark": { "role": "primary", "displayName": "Highlighter Mark", "canonical": "#bfd730", "tonalRamp": ["#3d420e", "#525a12", "#7c8a1e", "#a3b326", "#bfd730", "#d0e35c", "#e2ee92", "#f2f9cc"] },
+      "accent-mark-ink": { "role": "primary", "displayName": "Mark Ink", "canonical": "#1a1d0f", "tonalRamp": ["#0d0f08", "#1a1d0f", "#2a2f18", "#454b28", "#666e3f", "#8b9460", "#b6bf8f", "#dee3c4"] },
+      "margin": { "role": "tertiary", "displayName": "Margin Rule Red", "canonical": "#c0392b", "tonalRamp": ["#3f120d", "#601c15", "#8a2921", "#c0392b", "#d65c4f", "#e6867c", "#f2b4ac", "#fbe0dc"] },
+      "danger": { "role": "tertiary", "displayName": "Danger", "canonical": "#b3261e", "tonalRamp": ["#3a0c09", "#591310", "#7f1c17", "#b3261e", "#cc4c44", "#e07d76", "#f0aeaa", "#fbdad7"] },
+      "danger-bg": { "role": "neutral", "displayName": "Danger Wash", "canonical": "#fbeceb", "tonalRamp": ["#3a0c09", "#7f1c17", "#b3261e", "#cc4c44", "#e07d76", "#f0aeaa", "#f7d3d0", "#fbeceb"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display / Title", "purpose": "Page and card headings, course titles. JetBrains Mono, the student's own working face." },
+      "body": { "displayName": "Body", "purpose": "Running copy, lede text, empty-state messages. System sans, restrained." },
+      "label": { "displayName": "Label", "purpose": "Field labels, course codes, tab text, back-link, secondary buttons — the handwritten margin-label register." }
+    },
+    "shadows": [
+      { "name": "tab-rest", "value": "0 1px 2px rgba(36, 39, 43, 0.08)", "purpose": "Shallow lift for an unselected index-divider tab; not used elsewhere." },
+      { "name": "tab-selected", "value": "0 3px 6px rgba(36, 39, 43, 0.18)", "purpose": "Deeper lift when a tab is selected and moves flush." }
+    ],
+    "motion": [
+      { "name": "ease-mark", "value": "0.15s ease-out", "purpose": "Primary button's highlighter-mark clip-path and lift transition." },
+      { "name": "ease-tab", "value": "0.12s ease-out", "purpose": "Tab top-offset and shadow transition between rest and selected." }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Full-width action button whose only surface is a highlighter-mark stroke behind bold ink text — never a filled box.",
+      "html": "<button class=\"ds-btn-primary\">Send sign-in link</button>",
+      "css": ".ds-btn-primary { position: relative; width: 100%; padding: 12px 16px; border: none; background: transparent; color: #24272b; font-weight: 700; font-size: 15px; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; isolation: isolate; cursor: pointer; } .ds-btn-primary::before { content: ''; position: absolute; left: 8%; right: 8%; bottom: 24%; height: 40%; background: #bfd730; clip-path: polygon(1% 18%, 99% 4%, 100% 84%, 2% 96%); z-index: -1; transition: clip-path 0.15s ease-out, transform 0.15s ease-out; } .ds-btn-primary:hover::before, .ds-btn-primary:focus-visible::before { clip-path: polygon(0.5% 8%, 99% 12%, 99.5% 90%, 1% 84%); transform: translateY(-1px); } .ds-btn-primary:active::before { transform: translateY(0); } .ds-btn-primary:disabled { cursor: not-allowed; opacity: 0.55; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Lower-emphasis outlined action, e.g. 'Use a different email'.",
+      "html": "<button class=\"ds-btn-secondary\">Use a different email</button>",
+      "css": ".ds-btn-secondary { padding: 8px 12px; border: 1.5px solid #b9c2d0; border-radius: 3px; background: transparent; color: #5b6169; font-weight: 600; font-size: 13px; font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace; white-space: nowrap; cursor: pointer; } .ds-btn-secondary:hover, .ds-btn-secondary:focus-visible { border-color: #6b7519; color: #24272b; }"
+    },
+    {
+      "name": "Ruled Input Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Underline-only text field; the ruled-paper metaphor applied to form controls.",
+      "html": "<div class=\"ds-field\"><label for=\"ds-email\">SIIT email</label><input id=\"ds-email\" type=\"email\" placeholder=\"yourname@g.siit.tu.ac.th\" /></div>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 8px; } .ds-field label { font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.03em; color: #5b6169; } .ds-field input { padding: 8px 4px; border: none; border-bottom: 1.5px solid #b9c2d0; border-radius: 0; background: transparent; color: #24272b; font: inherit; font-size: 16px; } .ds-field input::placeholder { color: #5b6169; opacity: 0.7; } .ds-field input:focus-visible { outline: none; border-bottom-color: #6b7519; box-shadow: 0 1.5px 0 0 #6b7519; }"
+    },
+    {
+      "name": "Index Tab",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Physical index-divider tab; selected state fills with the highlighter mark and moves flush, the one place the mark fills a full surface.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab\" role=\"tab\" aria-selected=\"true\">Exam Intel</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Materials</button></div>",
+      "css": ".ds-tabs { display: flex; gap: 8px; } .ds-tab { padding: 8px 16px; background: #fbfbf9; border: 1px solid #b9c2d0; border-radius: 3px; color: #5b6169; font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-weight: 600; font-size: 13px; position: relative; top: 4px; box-shadow: 0 1px 2px rgba(36, 39, 43, 0.08); transition: top 0.12s ease-out, box-shadow 0.12s ease-out; cursor: pointer; } .ds-tab[aria-selected='true'] { background: #bfd730; border-color: #bfd730; color: #1a1d0f; top: 0; box-shadow: 0 3px 6px rgba(36, 39, 43, 0.18); }"
+    },
+    {
+      "name": "Course Row",
+      "kind": "custom",
+      "refersTo": "course-row",
+      "description": "Signature list unit: baseline-aligned mono code, title, tabular meta, hairline bottom rule, highlighter-tinted hover wash.",
+      "html": "<a class=\"ds-course-row\" href=\"#\"><span class=\"ds-code\">ITS301</span><span class=\"ds-title\">Software Engineering</span><span class=\"ds-credits\">3 cr</span></a>",
+      "css": ".ds-course-row { display: flex; align-items: baseline; gap: 16px; padding: 12px 8px; text-decoration: none; color: inherit; border-bottom: 1px solid #d8dee8; } .ds-course-row:hover, .ds-course-row:focus-visible { background: linear-gradient(to right, rgba(191, 215, 48, 0.2), rgba(191, 215, 48, 0) 70%); } .ds-code { font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-weight: 700; color: #24272b; white-space: nowrap; min-width: 4.5em; } .ds-title { flex: 1; color: #24272b; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; } .ds-credits { font-size: 13px; color: #5b6169; font-variant-numeric: tabular-nums; white-space: nowrap; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Engineering Lab Notebook",
+    "overview": "SIIT Study Hub reads as the lab notebook a Digital Engineering student already keeps, not a rounded EdTech dashboard. It refuses Google Classroom's soft cards-on-gray in favor of ruled structure, graphite ink, and a single highlighter accent used the way a student actually highlights: to mark a phrase, not to fill a button. The course code is the anchor of every screen and is set in the same monospace face a DE student's own IDE and lab reports already use — not a \"technical\" costume borrowed for effect, but the native display voice of this world.\n\nThe system is deliberately restrained: one saturated color (the highlighter), one fixed structural line (the red margin rule, present even on \"Loading…\"), and otherwise flat paper, hairline rules, and dark ink. Depth is conveyed by paper-and-ink metaphors — a highlighter mark, a physical index-tab reveal — never by card shadows or colored left borders standing in for hierarchy.",
+    "keyCharacteristics": [
+      "Paper-white ground, graphite ink, hairline rule-blue dividers — no gray cards",
+      "One highlighter accent, used as an underline/mark, never as a filled surface",
+      "A fixed red margin rule down the left edge, present on every screen",
+      "Course codes and headings in JetBrains Mono; body copy in system sans",
+      "Tabs behave as physical index dividers, not a flat connected bar"
+    ],
+    "rules": [
+      { "name": "The Margin Rule", "body": "A 1.5px fixed red (#c0392b) vertical line sits at 28px from the left edge on every screen, including loading states. It is the one persistent structural device and the only fixed-position color line in the system.", "section": "colors" },
+      { "name": "The Mark, Never a Button Rule", "body": "The highlighter accent only ever appears as a mark behind fixed-dark-ink text or as `::selection`/active-tab fill. It is never a solid filled button background at full-box scale; that treatment shipped once during the build and was corrected in finish review.", "section": "colors" },
+      { "name": "The Course Code Rule", "body": "The course code is always set in mono, bold, full ink color, and given a fixed minimum width in list rows so codes align into a column.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Course rows, empty states, error messages, and cards carry no box-shadow. Structure comes from hairline rules and the fixed margin rule, never from drop shadows.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use the highlighter mark (--accent-mark) only as a mark behind fixed dark-ink text or as the selected-tab fill — never as a full-box button background.",
+      "Do set every course code, heading, and label in JetBrains Mono; keep body copy on the system sans stack.",
+      "Do use hairline (--rule) or dashed (--rule-strong) horizontal rules for structure and hierarchy, not card shadows or colored borders.",
+      "Do keep the fixed red margin rule present and un-obstructed on every screen, including loading and error states.",
+      "Do use --accent (not --accent-mark) for any text or line color that sits directly on paper — it is the contrast-safe pairing."
+    ],
+    "donts": [
+      "Don't render the primary action as a solid filled button or a flat, connected tab bar — both were shipped once during the build and corrected in finish review as contract violations, not styles to repeat.",
+      "Don't introduce card-style box-shadows on content surfaces (rows, panels, cards); the tab's shallow shadow is a named exception tied to its physical-index-divider metaphor, not a general elevation token.",
+      "Don't stand in Unicode arrows or emoji for icons; icons are authored SVG at a single consistent stroke weight (see src/components/icons.tsx).",
+      "Don't apply the ruled-paper background texture to dense content screens — it's reserved for the single sparse auth/onboarding card."
+    ]
+  }
+}

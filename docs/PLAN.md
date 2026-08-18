@@ -132,6 +132,44 @@ them; nothing else gets designed for now.
 - **Manual** — magic-link redirect resolves correctly on the GitHub Pages URL,
   deep links survive refresh (404.html fallback), layout holds on a phone.
 
+## Business Model
+
+Not yet built — recorded here as the plan to develop once the DE cohort is
+actually using the archive. The MVP's job is to prove usage, not revenue.
+
+**Primary model: freemium with a contribution-based unlock** (the Course
+Hero / Chegg Study pattern — well-precedented in exactly this space). A hard
+paywall on student-generated content undercuts the trust the product
+depends on; this keeps a real paywall while preserving the reciprocity that
+makes people willing to contribute in the first place.
+
+- **Free tier**: full catalogue browsing, aggregate stats per course
+  (difficulty, submission count), and a capped number of full unlocks per
+  month (e.g. 3). **Contributing** an exam-intel report or material unlocks
+  full access to *that course* for the semester — give one, get one, no
+  payment required.
+- **Paid tier — "Study Hub Plus"** (hypothesis, needs validation against
+  actual Thai student price sensitivity): ~฿99–149/month or a
+  ~฿299–399/semester pass timed to exam periods. Unlimited unlocks, no
+  monthly cap, early access to new submissions. For students who'd rather
+  pay than contribute.
+- **Enforcement**: same principle as everything else in this build —
+  unlock/subscription status is checked in Supabase RLS, not the frontend.
+  Billing via Stripe (not yet integrated).
+- **Explicitly not doing**: ads. A tool students rely on during high-stress
+  exam periods is the wrong place for them.
+
+**Secondary, once there's real scale:**
+
+1. **Institutional licensing.** Package the platform — white-labeled,
+   per-institution content — and sell it to other Thai university
+   programs/faculties as an official student-success tool. Still the larger
+   long-term revenue ceiling than direct student payments, but slower to
+   close; first customer to approach is SIIT itself.
+2. **Recruiting partnerships.** Program- and year-segmented, pre-verified
+   students are valuable to internship and graduate recruiters. Sponsored,
+   opt-in postings to graduating cohorts.
+
 ## Open
 
 Product name. Worth deciding before the pitch, not before the build.
