@@ -241,14 +241,14 @@ otp_expiry = 3600
 # Use a production-ready SMTP server
 [auth.email.smtp]
 enabled = true
-host = "smtp.resend.com"
+host = "smtp.gmail.com"
 port = 587
-user = "resend"
-pass = "env(RESEND_API_KEY)"
-# Resend account is signed up with the @g.siit.tu.ac.th test address itself,
-# so the unverified sandbox sender (onboarding@resend.dev) is allowed to
-# deliver to it — no domain verification needed for this to work.
-admin_email = "onboarding@resend.dev"
+user = "boeing2992@gmail.com"
+pass = "env(GMAIL_APP_PASSWORD)"
+# Gmail SMTP + an App Password has no sandbox/recipient restriction like
+# Resend's unverified sender did — can deliver to any address, including
+# any @g.siit.tu.ac.th account, not just one specific one.
+admin_email = "boeing2992@gmail.com"
 sender_name = "SIIT Study Hub"
 
 # Uncomment to customize email template
