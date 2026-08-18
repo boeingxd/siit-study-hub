@@ -353,6 +353,18 @@
   border-bottom: 1px solid var(--rule);
 }
 
+/* A <button> version (materials with a file to open) needs its native
+   chrome stripped to match the <Link> version exactly. */
+button.course-row {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .course-row:hover,
 .course-row:focus-visible {
   background: linear-gradient(to right, rgba(191, 215, 48, 0.2), rgba(191, 215, 48, 0) 70%);

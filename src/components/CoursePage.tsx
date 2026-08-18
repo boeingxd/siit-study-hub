@@ -20,6 +20,7 @@ interface MaterialRow {
   title: string
   type: string
   semester: string | null
+  file_path: string | null
 }
 
 type Tab = 'exam_intel' | 'materials'
@@ -68,7 +69,7 @@ export function CoursePage({ authorId }: CoursePageProps) {
   const refetchMaterials = useCallback((courseId: string) => {
     return supabase
       .from('materials')
-      .select('id, title, type, semester')
+      .select('id, title, type, semester, file_path')
       .eq('course_id', courseId)
       .order('created_at', { ascending: false })
       .then(({ data }) => setMaterials(data ?? []))
@@ -79,6 +80,20 @@ export function CoursePage({ authorId }: CoursePageProps) {
     refetchExamIntel(course.id)
     refetchMaterials(course.id)
   }, [course, refetchExamIntel, refetchMaterials])
+
+  async function viewFile(filePath: string) {
+    // The materials bucket is private — a plain URL won't work. A signed
+    // URL is a short-lived, authenticated exception carved out for this
+    // one file, generated on demand rather than stored anywhere.
+    const { data, error } = await supabase.storage
+      .from('materials')
+      .createSignedUrl(filePath, 60)
+    if (error || !data) {
+      window.alert("Couldn't open this file. Please try again.")
+      return
+    }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer')
+  }
 
   const summary = useMemo(() => {
     if (!examIntel || examIntel.length === 0) return null
@@ -248,12 +263,25 @@ export function CoursePage({ authorId }: CoursePageProps) {
                 </div>
               ) : (
                 <ul className="course-list">
-                  {materials.map((row) => (
-                    <li key={row.id} className="course-row">
-                      <span className="title">{row.title}</span>
-                      <span className="credits">{row.type}</span>
-                    </li>
-                  ))}
+                  {materials.map((row) =>
+                    row.file_path ? (
+                      <li key={row.id}>
+                        <button
+                          type="button"
+                          className="course-row"
+                          onClick={() => viewFile(row.file_path!)}
+                        >
+                          <span className="title">{row.title}</span>
+                          <span className="credits">{row.type} · view file</span>
+                        </button>
+                      </li>
+                    ) : (
+                      <li key={row.id} className="course-row">
+                        <span className="title">{row.title}</span>
+                        <span className="credits">{row.type}</span>
+                      </li>
+                    ),
+                  )}
                 </ul>
               )}
             </>
