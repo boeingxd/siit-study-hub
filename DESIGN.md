@@ -126,9 +126,12 @@ The palette is almost monochrome — paper and ink — with exactly one saturate
 **Character:** Mono carries every heading, course code, and label — the same face the student's own tools already use, so it reads as native rather than "technical." Body copy stays on a restrained system sans so the mono voice doesn't fight for attention outside its structural role.
 
 ### Hierarchy
-- **Display/Title** (700, 21–23px, tight line-height, -0.01em tracking): page and card headings (`h1`), course titles.
-- **Body** (400, 16px, 1.55 line-height): running copy, empty-state text, lede paragraphs.
-- **Label** (600, 12–13px, 0.03em tracking, mono): field labels, course codes, tab text, back-link, secondary buttons — the "handwritten margin label" register.
+Five documented steps — `12px`, `13px`, `14px`, `15px`, `16px`, `21px`, `23px` — each tied to a distinct role rather than a generic numeric scale:
+- **Display/Title** — `21px`–`23px` (700, tight line-height, -0.01em tracking): page and card headings (`h1`), course titles.
+- **Body** — `16px` (400, 1.55 line-height): running copy, empty-state text, lede paragraphs.
+- **Control** — `15px` (600–700): the wordmark and anything a person directly operates — primary button, ruled input fields, the search field. Sits deliberately under Body so form chrome reads as tightened and purposeful rather than blocky; mono for the wordmark, inherited sans for buttons/inputs.
+- **Meta** — `14px` (400, sans): secondary sentence-length text that isn't a label — error messages, the signed-in "who" row, course-page meta line (program · credits). Between Label and Body: too discursive for a short mono tag, too quiet to compete with Body.
+- **Label** — `12px` and `13px` (600, 0.03em tracking, mono): field labels (`12px`), plus course codes, tab text, back-link, secondary buttons, credits/meta numerals in list rows, and the loading indicator (`13px`) — the "handwritten margin label" register.
 
 ### Named Rules
 **The Course Code Rule.** The course code is always set in mono, bold, full ink color, and given a fixed minimum width in list rows (`min-width: 4.5em`) so codes align into a column. It is the most consistently legible piece of data on any screen, per the product's own anchor principle.
@@ -146,7 +149,7 @@ The system is flat by default: no card shadows, no colored left borders standing
 
 ## Shapes
 
-Corners are mostly square. Inputs, the primary button, and course rows have `border-radius: 0`. The only rounded elements are small UI chrome that reads as a discrete object rather than a ruled line: the secondary button and the tab (`3px`, `--radius`), and scrollbar thumbs. Borders are hairlines (1–1.5px) in `--rule` or `--rule-strong`, used as full-width dividers under rows and beneath form fields rather than as box outlines around content.
+Corners are mostly square. Inputs, the primary button, and course rows have `border-radius: 0`. The only rounded elements are small UI chrome that reads as a discrete object rather than a ruled line: the secondary button and the tab (`3px`, `--radius`), and scrollbar thumbs (`6px` — a deliberate exception: at the scrollbar's own 10px width, `3px` would barely round at all, and a thumb is themed browser chrome, not part of the component shape language, so it gets the radius that actually reads as a capsule). Borders are hairlines (1–1.5px) in `--rule` or `--rule-strong`, used as full-width dividers under rows and beneath form fields rather than as box outlines around content.
 
 ## Components
 
