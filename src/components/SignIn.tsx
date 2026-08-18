@@ -31,9 +31,19 @@ export function SignIn() {
     setSubmitting(false)
 
     if (signInError) {
-      setError(
-        "Couldn't send the link. Double-check your SIIT email and try again.",
-      )
+      // Supabase rate-limits repeat OTP requests to the same address
+      // (currently 1/minute) — a real, expected condition, not a broken
+      // sign-in. Signing out and back in right away hits this every time,
+      // so it needs its own message instead of the generic fallback.
+      if (signInError.status === 429) {
+        setError(
+          "You already have a sign-in link on the way — check your email, or wait about a minute before requesting another.",
+        )
+      } else {
+        setError(
+          "Couldn't send the link. Double-check your SIIT email and try again.",
+        )
+      }
       return
     }
 
