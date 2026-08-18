@@ -32,7 +32,25 @@ typography:
     fontWeight: 400
     lineHeight: 1.55
     letterSpacing: "normal"
+  control:
+    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    fontSize: "15px"
+    fontWeight: 700
+    lineHeight: 1
+    letterSpacing: "normal"
+  meta:
+    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    fontSize: "14px"
+    fontWeight: 400
+    lineHeight: 1.4
+    letterSpacing: "normal"
   label:
+    fontFamily: "'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
+    fontSize: "13px"
+    fontWeight: 600
+    lineHeight: 1.3
+    letterSpacing: "0.03em"
+  field-label:
     fontFamily: "'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
     fontSize: "12px"
     fontWeight: 600
@@ -40,6 +58,7 @@ typography:
     letterSpacing: "0.03em"
 rounded:
   sm: "3px"
+  scrollbar: "6px"
 spacing:
   1: "4px"
   2: "8px"
@@ -131,7 +150,7 @@ Five documented steps — `12px`, `13px`, `14px`, `15px`, `16px`, `21px`, `23px`
 - **Body** — `16px` (400, 1.55 line-height): running copy, empty-state text, lede paragraphs.
 - **Control** — `15px` (600–700): the wordmark and anything a person directly operates — primary button, ruled input fields, the search field. Sits deliberately under Body so form chrome reads as tightened and purposeful rather than blocky; mono for the wordmark, inherited sans for buttons/inputs.
 - **Meta** — `14px` (400, sans): secondary sentence-length text that isn't a label — error messages, the signed-in "who" row, course-page meta line (program · credits). Between Label and Body: too discursive for a short mono tag, too quiet to compete with Body.
-- **Label** — `12px` and `13px` (600, 0.03em tracking, mono): field labels (`12px`), plus course codes, tab text, back-link, secondary buttons, credits/meta numerals in list rows, and the loading indicator (`13px`) — the "handwritten margin label" register.
+- **Label** (`13px`) / **Field Label** (`12px`) — same register (600, 0.03em tracking, mono), two sizes: form field labels get `field-label` (`12px`); course codes, tab text, back-link, secondary buttons, credits/meta numerals in list rows, and the loading indicator get `label` (`13px`) — the "handwritten margin label" register either way.
 
 ### Named Rules
 **The Course Code Rule.** The course code is always set in mono, bold, full ink color, and given a fixed minimum width in list rows (`min-width: 4.5em`) so codes align into a column. It is the most consistently legible piece of data on any screen, per the product's own anchor principle.
