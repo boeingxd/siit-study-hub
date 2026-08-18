@@ -5,14 +5,20 @@ import type { Course } from '../lib/types'
 import { BackArrowIcon } from './icons'
 import { ExamIntelForm } from './ExamIntelForm'
 import { MaterialsForm } from './MaterialsForm'
+import { DetailModal } from './DetailModal'
 
 interface ExamIntelRow {
   id: string
   exam_type: string
   semester: string
+  instructor: string | null
+  format: string[]
+  topics: string[]
+  allowed_aids: string | null
+  duration_min: number | null
   difficulty: number
   time_pressure: number
-  topics: string[]
+  advice: string | null
 }
 
 interface MaterialRow {
@@ -20,6 +26,8 @@ interface MaterialRow {
   title: string
   type: string
   semester: string | null
+  instructor: string | null
+  body_md: string | null
   file_path: string | null
 }
 
@@ -27,6 +35,13 @@ type Tab = 'exam_intel' | 'materials'
 
 interface CoursePageProps {
   authorId: string
+}
+
+const AID_LABELS: Record<string, string> = {
+  none: 'None',
+  one_sheet: 'One sheet',
+  open_book: 'Open book',
+  calculator: 'Calculator',
 }
 
 export function CoursePage({ authorId }: CoursePageProps) {
@@ -37,6 +52,8 @@ export function CoursePage({ authorId }: CoursePageProps) {
   const [materials, setMaterials] = useState<MaterialRow[] | null>(null)
   const [showIntelForm, setShowIntelForm] = useState(false)
   const [showMaterialsForm, setShowMaterialsForm] = useState(false)
+  const [selectedIntel, setSelectedIntel] = useState<ExamIntelRow | null>(null)
+  const [selectedMaterial, setSelectedMaterial] = useState<MaterialRow | null>(null)
 
   useEffect(() => {
     if (!code) return
@@ -60,7 +77,9 @@ export function CoursePage({ authorId }: CoursePageProps) {
   const refetchExamIntel = useCallback((courseId: string) => {
     return supabase
       .from('exam_intel')
-      .select('id, exam_type, semester, difficulty, time_pressure, topics')
+      .select(
+        'id, exam_type, semester, instructor, format, topics, allowed_aids, duration_min, difficulty, time_pressure, advice',
+      )
       .eq('course_id', courseId)
       .order('created_at', { ascending: false })
       .then(({ data }) => setExamIntel(data ?? []))
@@ -69,7 +88,7 @@ export function CoursePage({ authorId }: CoursePageProps) {
   const refetchMaterials = useCallback((courseId: string) => {
     return supabase
       .from('materials')
-      .select('id, title, type, semester, file_path')
+      .select('id, title, type, semester, instructor, body_md, file_path')
       .eq('course_id', courseId)
       .order('created_at', { ascending: false })
       .then(({ data }) => setMaterials(data ?? []))
@@ -213,13 +232,19 @@ export function CoursePage({ authorId }: CoursePageProps) {
                   )}
                   <ul className="course-list">
                     {examIntel.map((row) => (
-                      <li key={row.id} className="course-row">
-                        <span className="title">
-                          {row.exam_type} · {row.semester}
-                        </span>
-                        <span className="credits">
-                          difficulty {row.difficulty}/5 · pressure {row.time_pressure}/5
-                        </span>
+                      <li key={row.id}>
+                        <button
+                          type="button"
+                          className="course-row"
+                          onClick={() => setSelectedIntel(row)}
+                        >
+                          <span className="title">
+                            {row.exam_type} · {row.semester}
+                          </span>
+                          <span className="credits">
+                            difficulty {row.difficulty}/5 · pressure {row.time_pressure}/5
+                          </span>
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -263,30 +288,110 @@ export function CoursePage({ authorId }: CoursePageProps) {
                 </div>
               ) : (
                 <ul className="course-list">
-                  {materials.map((row) =>
-                    row.file_path ? (
-                      <li key={row.id}>
-                        <button
-                          type="button"
-                          className="course-row"
-                          onClick={() => viewFile(row.file_path!)}
-                        >
-                          <span className="title">{row.title}</span>
-                          <span className="credits">{row.type} · view file</span>
-                        </button>
-                      </li>
-                    ) : (
-                      <li key={row.id} className="course-row">
+                  {materials.map((row) => (
+                    <li key={row.id}>
+                      <button
+                        type="button"
+                        className="course-row"
+                        onClick={() => setSelectedMaterial(row)}
+                      >
                         <span className="title">{row.title}</span>
-                        <span className="credits">{row.type}</span>
-                      </li>
-                    ),
-                  )}
+                        <span className="credits">
+                          {row.type}
+                          {row.file_path ? ' · has file' : ''}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
                 </ul>
               )}
             </>
           )}
         </div>
+      )}
+
+      {selectedIntel && (
+        <DetailModal
+          title={`${selectedIntel.exam_type[0].toUpperCase()}${selectedIntel.exam_type.slice(1)} · ${selectedIntel.semester}`}
+          onClose={() => setSelectedIntel(null)}
+        >
+          <dl className="detail-list">
+            <dt>Difficulty</dt>
+            <dd>{selectedIntel.difficulty}/5</dd>
+            <dt>Time pressure</dt>
+            <dd>{selectedIntel.time_pressure}/5</dd>
+            {selectedIntel.instructor && (
+              <>
+                <dt>Instructor</dt>
+                <dd>{selectedIntel.instructor}</dd>
+              </>
+            )}
+            {selectedIntel.format.length > 0 && (
+              <>
+                <dt>Format</dt>
+                <dd>{selectedIntel.format.join(', ')}</dd>
+              </>
+            )}
+            {selectedIntel.allowed_aids && (
+              <>
+                <dt>Allowed aids</dt>
+                <dd>{AID_LABELS[selectedIntel.allowed_aids] ?? selectedIntel.allowed_aids}</dd>
+              </>
+            )}
+            {selectedIntel.duration_min && (
+              <>
+                <dt>Duration</dt>
+                <dd>{selectedIntel.duration_min} min</dd>
+              </>
+            )}
+            {selectedIntel.topics.length > 0 && (
+              <>
+                <dt>Topics</dt>
+                <dd>{selectedIntel.topics.join(', ')}</dd>
+              </>
+            )}
+          </dl>
+          {selectedIntel.advice && (
+            <>
+              <h3 className="detail-subhead">Advice</h3>
+              <p className="detail-body">{selectedIntel.advice}</p>
+            </>
+          )}
+        </DetailModal>
+      )}
+
+      {selectedMaterial && (
+        <DetailModal title={selectedMaterial.title} onClose={() => setSelectedMaterial(null)}>
+          <dl className="detail-list">
+            <dt>Type</dt>
+            <dd>{selectedMaterial.type}</dd>
+            {selectedMaterial.semester && (
+              <>
+                <dt>Semester</dt>
+                <dd>{selectedMaterial.semester}</dd>
+              </>
+            )}
+            {selectedMaterial.instructor && (
+              <>
+                <dt>Instructor</dt>
+                <dd>{selectedMaterial.instructor}</dd>
+              </>
+            )}
+          </dl>
+          {selectedMaterial.body_md && (
+            <p className="detail-body">{selectedMaterial.body_md}</p>
+          )}
+          {selectedMaterial.file_path && (
+            <button
+              type="button"
+              className="btn-primary"
+              style={{ marginTop: 'var(--space-4)' }}
+              onClick={() => viewFile(selectedMaterial.file_path!)}
+            >
+              View attached file
+            </button>
+          )}
+        </DetailModal>
       )}
     </div>
   )
