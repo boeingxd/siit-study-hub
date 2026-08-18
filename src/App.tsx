@@ -38,7 +38,7 @@ function AppShell({
       <main className="shell-main">
         <Routes>
           <Route path="/" element={<CourseList />} />
-          <Route path="/course/:code" element={<CoursePage />} />
+          <Route path="/course/:code" element={<CoursePage authorId={profile.id} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import type { Course } from '../lib/types'
 import { BackArrowIcon } from './icons'
+import { ExamIntelForm } from './ExamIntelForm'
 
 interface ExamIntelRow {
   id: string
@@ -21,12 +22,17 @@ interface MaterialRow {
 
 type Tab = 'exam_intel' | 'materials'
 
-export function CoursePage() {
+interface CoursePageProps {
+  authorId: string
+}
+
+export function CoursePage({ authorId }: CoursePageProps) {
   const { code } = useParams<{ code: string }>()
   const [course, setCourse] = useState<Course | null | undefined>(undefined)
   const [tab, setTab] = useState<Tab>('exam_intel')
   const [examIntel, setExamIntel] = useState<ExamIntelRow[] | null>(null)
   const [materials, setMaterials] = useState<MaterialRow[] | null>(null)
+  const [showIntelForm, setShowIntelForm] = useState(false)
 
   useEffect(() => {
     if (!code) return
@@ -47,18 +53,20 @@ export function CoursePage() {
     }
   }, [code])
 
+  const refetchExamIntel = useCallback((courseId: string) => {
+    return supabase
+      .from('exam_intel')
+      .select('id, exam_type, semester, difficulty, time_pressure')
+      .eq('course_id', courseId)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setExamIntel(data ?? []))
+  }, [])
+
   useEffect(() => {
     if (!course) return
     let active = true
 
-    supabase
-      .from('exam_intel')
-      .select('id, exam_type, semester, difficulty, time_pressure')
-      .eq('course_id', course.id)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        if (active) setExamIntel(data ?? [])
-      })
+    refetchExamIntel(course.id)
 
     supabase
       .from('materials')
@@ -72,7 +80,7 @@ export function CoursePage() {
     return () => {
       active = false
     }
-  }, [course])
+  }, [course, refetchExamIntel])
 
   if (course === undefined) {
     return <span className="loading-dot">Loading…</span>
@@ -130,28 +138,50 @@ export function CoursePage() {
 
       {tab === 'exam_intel' && (
         <div className="tab-panel" role="tabpanel">
-          {examIntel === null ? (
-            <span className="loading-dot">Loading…</span>
-          ) : examIntel.length === 0 ? (
-            <div className="empty-state">
-              <p>
-                No exam intel yet for {course.code}. Submitting reports —
-                format, coverage, difficulty — is coming soon.
-              </p>
-            </div>
+          {showIntelForm ? (
+            <ExamIntelForm
+              courseId={course.id}
+              authorId={authorId}
+              onCancel={() => setShowIntelForm(false)}
+              onSubmitted={() => {
+                setShowIntelForm(false)
+                refetchExamIntel(course.id)
+              }}
+            />
           ) : (
-            <ul className="course-list">
-              {examIntel.map((row) => (
-                <li key={row.id} className="course-row">
-                  <span className="title">
-                    {row.exam_type} · {row.semester}
-                  </span>
-                  <span className="credits">
-                    difficulty {row.difficulty}/5 · pressure {row.time_pressure}/5
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ marginBottom: 'var(--space-4)' }}
+                onClick={() => setShowIntelForm(true)}
+              >
+                + Add exam intel
+              </button>
+              {examIntel === null ? (
+                <span className="loading-dot">Loading…</span>
+              ) : examIntel.length === 0 ? (
+                <div className="empty-state">
+                  <p>
+                    No exam intel yet for {course.code}. Be the first to report
+                    the format, coverage, and difficulty.
+                  </p>
+                </div>
+              ) : (
+                <ul className="course-list">
+                  {examIntel.map((row) => (
+                    <li key={row.id} className="course-row">
+                      <span className="title">
+                        {row.exam_type} · {row.semester}
+                      </span>
+                      <span className="credits">
+                        difficulty {row.difficulty}/5 · pressure {row.time_pressure}/5
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
         </div>
       )}
