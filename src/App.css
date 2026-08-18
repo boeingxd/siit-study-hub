@@ -28,7 +28,12 @@
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--ink);
+  line-height: 1;
+  /* Fixed dark ink, not var(--ink): the mark behind this text is always a
+     bright color in both themes, so the text sitting on it can never
+     follow --ink (which flips to near-white in dark mode — unreadable on
+     a light mark). See .btn-primary for the same reasoning. */
+  color: var(--accent-mark-ink);
   margin-bottom: var(--space-6);
   position: relative;
   display: inline-block;
@@ -37,13 +42,12 @@
 .brand::after {
   content: '';
   position: absolute;
-  left: -2px;
-  right: -2px;
-  bottom: 1px;
-  height: 0.4em;
+  left: -3px;
+  right: -3px;
+  top: -2px;
+  bottom: -3px;
   background: var(--accent-mark);
   z-index: -1;
-  opacity: 0.85;
 }
 
 .card {
@@ -113,37 +117,42 @@
 }
 
 /* The highlighter mark — the one recurring signature moment. This is a
-   mark ON the label, not a filled button: the stripe covers roughly the
-   text's own height, never the button's full padded box, so it reads as
-   "this phrase is highlighted," not "this is a colored rectangle." */
+   mark ON the label, not a filled button: the stripe is inset from the
+   button's padded edges on all sides, never the full clickable box, so it
+   reads as "this phrase is highlighted," not "this is a colored
+   rectangle." Text is fixed dark ink (--accent-mark-ink), not the themed
+   --ink — the mark is always a bright color in both light and dark mode,
+   so the text on it can never follow the theme (near-white --ink on a
+   light mark is unreadable, which is what dark mode was shipping). */
 .btn-primary {
   position: relative;
   width: 100%;
   padding: var(--space-3) var(--space-4);
   border: none;
   background: transparent;
-  color: var(--ink);
+  color: var(--accent-mark-ink);
   font-weight: 700;
   font-size: 15px;
+  line-height: 1;
   isolation: isolate;
 }
 
 .btn-primary::before {
   content: '';
   position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: 24%;
-  height: 40%;
+  left: 6%;
+  right: 6%;
+  bottom: 14%;
+  height: 72%;
   background: var(--accent-mark);
-  clip-path: polygon(1% 18%, 99% 4%, 100% 84%, 2% 96%);
+  clip-path: polygon(1% 10%, 99% 3%, 100% 90%, 2% 97%);
   z-index: -1;
   transition: clip-path 0.15s ease-out, transform 0.15s ease-out;
 }
 
 .btn-primary:hover::before,
 .btn-primary:focus-visible::before {
-  clip-path: polygon(0.5% 8%, 99% 12%, 99.5% 90%, 1% 84%);
+  clip-path: polygon(0.5% 5%, 99% 9%, 99.5% 95%, 1% 91%);
   transform: translateY(-1px);
 }
 
