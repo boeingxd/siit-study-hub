@@ -99,7 +99,7 @@ Seed the course catalogue. Search and browse by code or title. Course page shell
 with Exam Intel and Materials tabs. Empty states that invite contribution rather
 than dead-end.
 
-**Phase 4 — Write path**
+**Phase 4 — Write path** ✅ done
 Exam-intel form (target: under two minutes to complete). Material submission with
 markdown body and optional file upload. Per-contribution "credit me by name"
 toggle. Aggregation logic on the course page.

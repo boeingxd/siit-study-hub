@@ -482,3 +482,15 @@
   display: flex;
   gap: var(--space-2);
 }
+
+.intel-summary {
+  font-size: 13px;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: var(--space-3);
+}
+
+.field input[type='file'] {
+  border-bottom: none;
+  padding: var(--space-2) 0;
+}

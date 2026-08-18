@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import type { Course } from '../lib/types'
 import { BackArrowIcon } from './icons'
 import { ExamIntelForm } from './ExamIntelForm'
+import { MaterialsForm } from './MaterialsForm'
 
 interface ExamIntelRow {
   id: string
@@ -11,6 +12,7 @@ interface ExamIntelRow {
   semester: string
   difficulty: number
   time_pressure: number
+  topics: string[]
 }
 
 interface MaterialRow {
@@ -33,6 +35,7 @@ export function CoursePage({ authorId }: CoursePageProps) {
   const [examIntel, setExamIntel] = useState<ExamIntelRow[] | null>(null)
   const [materials, setMaterials] = useState<MaterialRow[] | null>(null)
   const [showIntelForm, setShowIntelForm] = useState(false)
+  const [showMaterialsForm, setShowMaterialsForm] = useState(false)
 
   useEffect(() => {
     if (!code) return
@@ -56,31 +59,46 @@ export function CoursePage({ authorId }: CoursePageProps) {
   const refetchExamIntel = useCallback((courseId: string) => {
     return supabase
       .from('exam_intel')
-      .select('id, exam_type, semester, difficulty, time_pressure')
+      .select('id, exam_type, semester, difficulty, time_pressure, topics')
       .eq('course_id', courseId)
       .order('created_at', { ascending: false })
       .then(({ data }) => setExamIntel(data ?? []))
   }, [])
 
-  useEffect(() => {
-    if (!course) return
-    let active = true
-
-    refetchExamIntel(course.id)
-
-    supabase
+  const refetchMaterials = useCallback((courseId: string) => {
+    return supabase
       .from('materials')
       .select('id, title, type, semester')
-      .eq('course_id', course.id)
+      .eq('course_id', courseId)
       .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        if (active) setMaterials(data ?? [])
-      })
+      .then(({ data }) => setMaterials(data ?? []))
+  }, [])
 
-    return () => {
-      active = false
+  useEffect(() => {
+    if (!course) return
+    refetchExamIntel(course.id)
+    refetchMaterials(course.id)
+  }, [course, refetchExamIntel, refetchMaterials])
+
+  const summary = useMemo(() => {
+    if (!examIntel || examIntel.length === 0) return null
+    const n = examIntel.length
+    const avgDifficulty = examIntel.reduce((sum, r) => sum + r.difficulty, 0) / n
+    const avgPressure = examIntel.reduce((sum, r) => sum + r.time_pressure, 0) / n
+
+    const topicCounts = new Map<string, number>()
+    for (const row of examIntel) {
+      for (const topic of row.topics ?? []) {
+        topicCounts.set(topic, (topicCounts.get(topic) ?? 0) + 1)
+      }
     }
-  }, [course, refetchExamIntel])
+    const topTopics = [...topicCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([topic]) => topic)
+
+    return { n, avgDifficulty, avgPressure, topTopics }
+  }, [examIntel])
 
   if (course === undefined) {
     return <span className="loading-dot">Loading…</span>
@@ -168,18 +186,29 @@ export function CoursePage({ authorId }: CoursePageProps) {
                   </p>
                 </div>
               ) : (
-                <ul className="course-list">
-                  {examIntel.map((row) => (
-                    <li key={row.id} className="course-row">
-                      <span className="title">
-                        {row.exam_type} · {row.semester}
-                      </span>
-                      <span className="credits">
-                        difficulty {row.difficulty}/5 · pressure {row.time_pressure}/5
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  {summary && (
+                    <p className="intel-summary">
+                      {summary.n} report{summary.n === 1 ? '' : 's'} · avg
+                      difficulty {summary.avgDifficulty.toFixed(1)}/5 · avg
+                      pressure {summary.avgPressure.toFixed(1)}/5
+                      {summary.topTopics.length > 0 &&
+                        ` · most cited: ${summary.topTopics.join(', ')}`}
+                    </p>
+                  )}
+                  <ul className="course-list">
+                    {examIntel.map((row) => (
+                      <li key={row.id} className="course-row">
+                        <span className="title">
+                          {row.exam_type} · {row.semester}
+                        </span>
+                        <span className="credits">
+                          difficulty {row.difficulty}/5 · pressure {row.time_pressure}/5
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
               )}
             </>
           )}
@@ -188,24 +217,46 @@ export function CoursePage({ authorId }: CoursePageProps) {
 
       {tab === 'materials' && (
         <div className="tab-panel" role="tabpanel">
-          {materials === null ? (
-            <span className="loading-dot">Loading…</span>
-          ) : materials.length === 0 ? (
-            <div className="empty-state">
-              <p>
-                No materials yet for {course.code}. Uploading notes and
-                summaries is coming soon.
-              </p>
-            </div>
+          {showMaterialsForm ? (
+            <MaterialsForm
+              courseId={course.id}
+              authorId={authorId}
+              onCancel={() => setShowMaterialsForm(false)}
+              onSubmitted={() => {
+                setShowMaterialsForm(false)
+                refetchMaterials(course.id)
+              }}
+            />
           ) : (
-            <ul className="course-list">
-              {materials.map((row) => (
-                <li key={row.id} className="course-row">
-                  <span className="title">{row.title}</span>
-                  <span className="credits">{row.type}</span>
-                </li>
-              ))}
-            </ul>
+            <>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ marginBottom: 'var(--space-4)' }}
+                onClick={() => setShowMaterialsForm(true)}
+              >
+                + Add materials
+              </button>
+              {materials === null ? (
+                <span className="loading-dot">Loading…</span>
+              ) : materials.length === 0 ? (
+                <div className="empty-state">
+                  <p>
+                    No materials yet for {course.code}. Be the first to share
+                    notes, a summary, or a cheat sheet.
+                  </p>
+                </div>
+              ) : (
+                <ul className="course-list">
+                  {materials.map((row) => (
+                    <li key={row.id} className="course-row">
+                      <span className="title">{row.title}</span>
+                      <span className="credits">{row.type}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
         </div>
       )}
