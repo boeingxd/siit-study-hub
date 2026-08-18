@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import type { Course } from '../lib/types'
+import { SupportBanner } from './SupportBanner'
 
 export function CourseList() {
   const [courses, setCourses] = useState<Course[] | null>(null)
@@ -73,6 +74,7 @@ export function CourseList() {
           ))}
         </ul>
       )}
+      <SupportBanner />
     </div>
   )
 }

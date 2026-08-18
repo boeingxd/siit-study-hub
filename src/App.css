@@ -465,3 +465,20 @@
   margin: 0;
   max-width: 46ch;
 }
+
+/* Support banner — mock donation ask, not a real payment flow. */
+.support-banner {
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px dashed var(--rule-strong);
+}
+
+.support-banner p {
+  max-width: 52ch;
+  margin-bottom: var(--space-3);
+}
+
+.support-amounts {
+  display: flex;
+  gap: var(--space-2);
+}
