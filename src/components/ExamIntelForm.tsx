@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import type { ExamIntelRow } from '../lib/types'
 
 const EXAM_TYPES = ['midterm', 'final', 'quiz'] as const
 const FORMATS = ['MCQ', 'Written', 'Coding', 'Oral'] as const
@@ -14,22 +15,29 @@ const AIDS = [
 interface ExamIntelFormProps {
   courseId: string
   authorId: string
+  initial?: ExamIntelRow
   onSubmitted: () => void
   onCancel: () => void
 }
 
-export function ExamIntelForm({ courseId, authorId, onSubmitted, onCancel }: ExamIntelFormProps) {
-  const [examType, setExamType] = useState<string>('midterm')
-  const [semester, setSemester] = useState('')
-  const [instructor, setInstructor] = useState('')
-  const [formats, setFormats] = useState<string[]>([])
-  const [topics, setTopics] = useState('')
-  const [allowedAids, setAllowedAids] = useState('none')
-  const [duration, setDuration] = useState('')
-  const [timePressure, setTimePressure] = useState(3)
-  const [difficulty, setDifficulty] = useState(3)
-  const [advice, setAdvice] = useState('')
-  const [creditByName, setCreditByName] = useState(false)
+export function ExamIntelForm({
+  courseId,
+  authorId,
+  initial,
+  onSubmitted,
+  onCancel,
+}: ExamIntelFormProps) {
+  const [examType, setExamType] = useState<string>(initial?.exam_type ?? 'midterm')
+  const [semester, setSemester] = useState(initial?.semester ?? '')
+  const [instructor, setInstructor] = useState(initial?.instructor ?? '')
+  const [formats, setFormats] = useState<string[]>(initial?.format ?? [])
+  const [topics, setTopics] = useState(initial?.topics.join(', ') ?? '')
+  const [allowedAids, setAllowedAids] = useState(initial?.allowed_aids ?? 'none')
+  const [duration, setDuration] = useState(initial?.duration_min?.toString() ?? '')
+  const [timePressure, setTimePressure] = useState(initial?.time_pressure ?? 3)
+  const [difficulty, setDifficulty] = useState(initial?.difficulty ?? 3)
+  const [advice, setAdvice] = useState(initial?.advice ?? '')
+  const [creditByName, setCreditByName] = useState(initial?.credit_by_name ?? false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -46,9 +54,7 @@ export function ExamIntelForm({ courseId, authorId, onSubmitted, onCancel }: Exa
     setSubmitting(true)
     setError(null)
 
-    const { error: insertError } = await supabase.from('exam_intel').insert({
-      course_id: courseId,
-      author_id: authorId,
+    const payload = {
       exam_type: examType,
       semester: semester.trim(),
       instructor: instructor.trim() || null,
@@ -63,11 +69,25 @@ export function ExamIntelForm({ courseId, authorId, onSubmitted, onCancel }: Exa
       difficulty,
       advice: advice.trim() || null,
       credit_by_name: creditByName,
-    })
+    }
+
+    const { data, error: writeError } = initial
+      ? await supabase.from('exam_intel').update(payload).eq('id', initial.id).select('id')
+      : await supabase
+          .from('exam_intel')
+          .insert({ ...payload, course_id: courseId, author_id: authorId })
+          .select('id')
 
     setSubmitting(false)
-    if (insertError) {
-      setError("Couldn't save this report. Please try again.")
+    // Under RLS, an update that matches no row visible to this policy
+    // still returns success with zero rows — check the returned row count
+    // rather than trusting the absence of an error.
+    if (writeError || !data || data.length === 0) {
+      setError(
+        initial
+          ? "Couldn't save your changes. Please try again."
+          : "Couldn't save this report. Please try again.",
+      )
       return
     }
     onSubmitted()
@@ -201,7 +221,7 @@ export function ExamIntelForm({ courseId, authorId, onSubmitted, onCancel }: Exa
 
       <div className="form-actions">
         <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? 'Saving…' : 'Submit'}
+          {submitting ? 'Saving…' : initial ? 'Save changes' : 'Submit'}
         </button>
         <button type="button" className="btn-secondary" onClick={onCancel}>
           Cancel

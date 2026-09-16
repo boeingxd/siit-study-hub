@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import type { MaterialRow } from '../lib/types'
+import { safeFileName } from '../lib/moderation'
 
 const TYPES = [
   { value: 'summary', label: 'Summary' },
@@ -14,20 +16,30 @@ const ALLOWED_MIME = ['application/pdf', 'image/png', 'image/jpeg', 'text/plain'
 interface MaterialsFormProps {
   courseId: string
   authorId: string
+  initial?: MaterialRow
   onSubmitted: () => void
   onCancel: () => void
 }
 
-export function MaterialsForm({ courseId, authorId, onSubmitted, onCancel }: MaterialsFormProps) {
-  const [title, setTitle] = useState('')
-  const [type, setType] = useState<string>('notes')
-  const [semester, setSemester] = useState('')
-  const [instructor, setInstructor] = useState('')
-  const [bodyMd, setBodyMd] = useState('')
+export function MaterialsForm({
+  courseId,
+  authorId,
+  initial,
+  onSubmitted,
+  onCancel,
+}: MaterialsFormProps) {
+  const [title, setTitle] = useState(initial?.title ?? '')
+  const [type, setType] = useState<string>(initial?.type ?? 'notes')
+  const [semester, setSemester] = useState(initial?.semester ?? '')
+  const [instructor, setInstructor] = useState(initial?.instructor ?? '')
+  const [bodyMd, setBodyMd] = useState(initial?.body_md ?? '')
   const [file, setFile] = useState<File | null>(null)
-  const [creditByName, setCreditByName] = useState(false)
+  const [removeExistingFile, setRemoveExistingFile] = useState(false)
+  const [creditByName, setCreditByName] = useState(initial?.credit_by_name ?? false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const existingFileName = initial?.file_path?.split('/').pop() ?? null
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const picked = e.target.files?.[0] ?? null
@@ -45,6 +57,7 @@ export function MaterialsForm({ courseId, authorId, onSubmitted, onCancel }: Mat
     }
     setError(null)
     setFile(picked)
+    if (picked) setRemoveExistingFile(false)
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -53,17 +66,18 @@ export function MaterialsForm({ courseId, authorId, onSubmitted, onCancel }: Mat
       setError('Title is required.')
       return
     }
-    if (!bodyMd.trim() && !file) {
-      setError('Add notes below, attach a file, or both.')
+    const willHaveFile = file || (existingFileName && !removeExistingFile)
+    if (!bodyMd.trim() && !willHaveFile) {
+      setError('Add notes before removing the file — a material needs one or the other.')
       return
     }
 
     setSubmitting(true)
     setError(null)
 
-    let filePath: string | null = null
+    let newFilePath: string | null = null
     if (file) {
-      const path = `${authorId}/${Date.now()}-${file.name}`
+      const path = `${authorId}/${Date.now()}-${safeFileName(file.name)}`
       const { error: uploadError } = await supabase.storage
         .from('materials')
         .upload(path, file)
@@ -72,23 +86,58 @@ export function MaterialsForm({ courseId, authorId, onSubmitted, onCancel }: Mat
         setError("Couldn't upload the file. Please try again.")
         return
       }
-      filePath = path
+      newFilePath = path
     }
 
-    const { error: insertError } = await supabase.from('materials').insert({
-      course_id: courseId,
-      author_id: authorId,
+    const payload = {
       title: title.trim(),
       type,
       semester: semester.trim() || null,
       instructor: instructor.trim() || null,
       body_md: bodyMd.trim() || null,
-      file_path: filePath,
       credit_by_name: creditByName,
-    })
+    }
+
+    if (initial) {
+      const finalFilePath = file ? newFilePath : removeExistingFile ? null : initial.file_path
+      const oldPath = initial.file_path
+
+      const { data, error: writeError } = await supabase
+        .from('materials')
+        .update({ ...payload, file_path: finalFilePath })
+        .eq('id', initial.id)
+        .select('id')
+
+      setSubmitting(false)
+      // Under RLS, an update matching no row visible to this policy still
+      // returns success with zero rows — check the row count, not just error.
+      if (writeError || !data || data.length === 0) {
+        if (newFilePath) await supabase.storage.from('materials').remove([newFilePath])
+        setError("Couldn't save your changes. Please try again.")
+        return
+      }
+
+      // Only remove the old blob once the row no longer points at it — never
+      // delete-then-update, or a failure in between leaves the row pointing
+      // at nothing.
+      if (oldPath && oldPath !== finalFilePath) {
+        await supabase.storage.from('materials').remove([oldPath])
+      }
+      onSubmitted()
+      return
+    }
+
+    const { data, error: insertError } = await supabase
+      .from('materials')
+      .insert({ ...payload, course_id: courseId, author_id: authorId, file_path: newFilePath })
+      .select('id')
 
     setSubmitting(false)
-    if (insertError) {
+    if (insertError || !data || data.length === 0) {
+      // Compensating delete: the upload above already succeeded, so without
+      // this the file would be stranded in the bucket with nothing ever
+      // referencing it. Best-effort — if this also fails the orphan remains.
+      if (newFilePath) await supabase.storage.from('materials').remove([newFilePath])
       setError("Couldn't save this material. Please try again.")
       return
     }
@@ -159,6 +208,19 @@ export function MaterialsForm({ courseId, authorId, onSubmitted, onCancel }: Mat
 
       <div className="field">
         <label htmlFor="mat-file">Attach a file (optional — PDF, PNG, JPEG, TXT, MD, 10 MB max)</label>
+        {existingFileName && !file && !removeExistingFile && (
+          <span className="hint">
+            Current file: {existingFileName} —{' '}
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setRemoveExistingFile(true)}
+            >
+              Remove
+            </button>
+          </span>
+        )}
+        {removeExistingFile && !file && <span className="hint">File will be removed on save.</span>}
         <input id="mat-file" type="file" accept={ALLOWED_MIME.join(',')} onChange={handleFileChange} />
         {file && <span className="hint">{file.name}</span>}
       </div>
@@ -174,7 +236,7 @@ export function MaterialsForm({ courseId, authorId, onSubmitted, onCancel }: Mat
 
       <div className="form-actions">
         <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? 'Saving…' : 'Submit'}
+          {submitting ? 'Saving…' : initial ? 'Save changes' : 'Submit'}
         </button>
         <button type="button" className="btn-secondary" onClick={onCancel}>
           Cancel

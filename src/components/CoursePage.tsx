@@ -1,35 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
-import type { Course } from '../lib/types'
+import type { Course, ExamIntelRow, MaterialRow } from '../lib/types'
 import { BackArrowIcon } from './icons'
 import { ExamIntelForm } from './ExamIntelForm'
 import { MaterialsForm } from './MaterialsForm'
 import { DetailModal } from './DetailModal'
-
-interface ExamIntelRow {
-  id: string
-  exam_type: string
-  semester: string
-  instructor: string | null
-  format: string[]
-  topics: string[]
-  allowed_aids: string | null
-  duration_min: number | null
-  difficulty: number
-  time_pressure: number
-  advice: string | null
-}
-
-interface MaterialRow {
-  id: string
-  title: string
-  type: string
-  semester: string | null
-  instructor: string | null
-  body_md: string | null
-  file_path: string | null
-}
+import { ModerationActions } from './ModerationActions'
 
 type Tab = 'exam_intel' | 'materials'
 
@@ -44,6 +21,12 @@ const AID_LABELS: Record<string, string> = {
   calculator: 'Calculator',
 }
 
+const EXAM_INTEL_COLUMNS =
+  'id, author_id, exam_type, semester, instructor, format, topics, allowed_aids, duration_min, difficulty, time_pressure, advice, credit_by_name, removed_at, removed_note'
+
+const MATERIALS_COLUMNS =
+  'id, author_id, title, type, semester, instructor, body_md, file_path, credit_by_name, removed_at, removed_note'
+
 export function CoursePage({ authorId }: CoursePageProps) {
   const { code } = useParams<{ code: string }>()
   const [course, setCourse] = useState<Course | null | undefined>(undefined)
@@ -52,8 +35,11 @@ export function CoursePage({ authorId }: CoursePageProps) {
   const [materials, setMaterials] = useState<MaterialRow[] | null>(null)
   const [showIntelForm, setShowIntelForm] = useState(false)
   const [showMaterialsForm, setShowMaterialsForm] = useState(false)
+  const [editingIntel, setEditingIntel] = useState<ExamIntelRow | null>(null)
+  const [editingMaterial, setEditingMaterial] = useState<MaterialRow | null>(null)
   const [selectedIntel, setSelectedIntel] = useState<ExamIntelRow | null>(null)
   const [selectedMaterial, setSelectedMaterial] = useState<MaterialRow | null>(null)
+  const [fileError, setFileError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!code) return
@@ -77,9 +63,7 @@ export function CoursePage({ authorId }: CoursePageProps) {
   const refetchExamIntel = useCallback((courseId: string) => {
     return supabase
       .from('exam_intel')
-      .select(
-        'id, exam_type, semester, instructor, format, topics, allowed_aids, duration_min, difficulty, time_pressure, advice',
-      )
+      .select(EXAM_INTEL_COLUMNS)
       .eq('course_id', courseId)
       .order('created_at', { ascending: false })
       .then(({ data }) => setExamIntel(data ?? []))
@@ -88,7 +72,7 @@ export function CoursePage({ authorId }: CoursePageProps) {
   const refetchMaterials = useCallback((courseId: string) => {
     return supabase
       .from('materials')
-      .select('id, title, type, semester, instructor, body_md, file_path')
+      .select(MATERIALS_COLUMNS)
       .eq('course_id', courseId)
       .order('created_at', { ascending: false })
       .then(({ data }) => setMaterials(data ?? []))
@@ -104,24 +88,33 @@ export function CoursePage({ authorId }: CoursePageProps) {
     // The materials bucket is private — a plain URL won't work. A signed
     // URL is a short-lived, authenticated exception carved out for this
     // one file, generated on demand rather than stored anywhere.
+    setFileError(null)
     const { data, error } = await supabase.storage
       .from('materials')
       .createSignedUrl(filePath, 60)
     if (error || !data) {
-      window.alert("Couldn't open this file. Please try again.")
+      setFileError("Couldn't open this file. Please try again.")
       return
     }
     window.open(data.signedUrl, '_blank', 'noopener,noreferrer')
   }
 
+  // Removed rows only ever reach this component if RLS already decided we
+  // may see them (their own author, or an admin) — split here purely for
+  // presentation, not as an access check.
+  const liveExamIntel = useMemo(() => examIntel?.filter((r) => !r.removed_at) ?? [], [examIntel])
+  const removedExamIntel = useMemo(() => examIntel?.filter((r) => r.removed_at) ?? [], [examIntel])
+  const liveMaterials = useMemo(() => materials?.filter((r) => !r.removed_at) ?? [], [materials])
+  const removedMaterials = useMemo(() => materials?.filter((r) => r.removed_at) ?? [], [materials])
+
   const summary = useMemo(() => {
-    if (!examIntel || examIntel.length === 0) return null
-    const n = examIntel.length
-    const avgDifficulty = examIntel.reduce((sum, r) => sum + r.difficulty, 0) / n
-    const avgPressure = examIntel.reduce((sum, r) => sum + r.time_pressure, 0) / n
+    if (liveExamIntel.length === 0) return null
+    const n = liveExamIntel.length
+    const avgDifficulty = liveExamIntel.reduce((sum, r) => sum + r.difficulty, 0) / n
+    const avgPressure = liveExamIntel.reduce((sum, r) => sum + r.time_pressure, 0) / n
 
     const topicCounts = new Map<string, number>()
-    for (const row of examIntel) {
+    for (const row of liveExamIntel) {
       for (const topic of row.topics ?? []) {
         topicCounts.set(topic, (topicCounts.get(topic) ?? 0) + 1)
       }
@@ -132,7 +125,7 @@ export function CoursePage({ authorId }: CoursePageProps) {
       .map(([topic]) => topic)
 
     return { n, avgDifficulty, avgPressure, topTopics }
-  }, [examIntel])
+  }, [liveExamIntel])
 
   if (course === undefined) {
     return <span className="loading-dot">Loading…</span>
@@ -150,6 +143,19 @@ export function CoursePage({ authorId }: CoursePageProps) {
         </p>
       </div>
     )
+  }
+
+  const intelFormOpen = showIntelForm || editingIntel !== null
+  const materialsFormOpen = showMaterialsForm || editingMaterial !== null
+
+  function closeIntelForm() {
+    setShowIntelForm(false)
+    setEditingIntel(null)
+  }
+
+  function closeMaterialsForm() {
+    setShowMaterialsForm(false)
+    setEditingMaterial(null)
   }
 
   return (
@@ -190,13 +196,15 @@ export function CoursePage({ authorId }: CoursePageProps) {
 
       {tab === 'exam_intel' && (
         <div className="tab-panel" role="tabpanel">
-          {showIntelForm ? (
+          {intelFormOpen ? (
             <ExamIntelForm
+              key={editingIntel?.id ?? 'new'}
               courseId={course.id}
               authorId={authorId}
-              onCancel={() => setShowIntelForm(false)}
+              initial={editingIntel ?? undefined}
+              onCancel={closeIntelForm}
               onSubmitted={() => {
-                setShowIntelForm(false)
+                closeIntelForm()
                 refetchExamIntel(course.id)
               }}
             />
@@ -212,7 +220,7 @@ export function CoursePage({ authorId }: CoursePageProps) {
               </button>
               {examIntel === null ? (
                 <span className="loading-dot">Loading…</span>
-              ) : examIntel.length === 0 ? (
+              ) : liveExamIntel.length === 0 ? (
                 <div className="empty-state">
                   <p>
                     No exam intel yet for {course.code}. Be the first to report
@@ -231,7 +239,7 @@ export function CoursePage({ authorId }: CoursePageProps) {
                     </p>
                   )}
                   <ul className="course-list">
-                    {examIntel.map((row) => (
+                    {liveExamIntel.map((row) => (
                       <li key={row.id}>
                         <button
                           type="button"
@@ -250,6 +258,29 @@ export function CoursePage({ authorId }: CoursePageProps) {
                   </ul>
                 </>
               )}
+              {removedExamIntel.length > 0 && (
+                <>
+                  <p className="hint" style={{ marginTop: 'var(--space-5)' }}>
+                    Removed — visible only to you
+                  </p>
+                  <ul className="course-list">
+                    {removedExamIntel.map((row) => (
+                      <li key={row.id}>
+                        <button
+                          type="button"
+                          className="course-row"
+                          onClick={() => setSelectedIntel(row)}
+                        >
+                          <span className="title">
+                            {row.exam_type} · {row.semester}
+                          </span>
+                          <span className="credits">Removed</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </>
           )}
         </div>
@@ -257,13 +288,15 @@ export function CoursePage({ authorId }: CoursePageProps) {
 
       {tab === 'materials' && (
         <div className="tab-panel" role="tabpanel">
-          {showMaterialsForm ? (
+          {materialsFormOpen ? (
             <MaterialsForm
+              key={editingMaterial?.id ?? 'new'}
               courseId={course.id}
               authorId={authorId}
-              onCancel={() => setShowMaterialsForm(false)}
+              initial={editingMaterial ?? undefined}
+              onCancel={closeMaterialsForm}
               onSubmitted={() => {
-                setShowMaterialsForm(false)
+                closeMaterialsForm()
                 refetchMaterials(course.id)
               }}
             />
@@ -279,7 +312,7 @@ export function CoursePage({ authorId }: CoursePageProps) {
               </button>
               {materials === null ? (
                 <span className="loading-dot">Loading…</span>
-              ) : materials.length === 0 ? (
+              ) : liveMaterials.length === 0 ? (
                 <div className="empty-state">
                   <p>
                     No materials yet for {course.code}. Be the first to share
@@ -288,7 +321,7 @@ export function CoursePage({ authorId }: CoursePageProps) {
                 </div>
               ) : (
                 <ul className="course-list">
-                  {materials.map((row) => (
+                  {liveMaterials.map((row) => (
                     <li key={row.id}>
                       <button
                         type="button"
@@ -304,6 +337,27 @@ export function CoursePage({ authorId }: CoursePageProps) {
                     </li>
                   ))}
                 </ul>
+              )}
+              {removedMaterials.length > 0 && (
+                <>
+                  <p className="hint" style={{ marginTop: 'var(--space-5)' }}>
+                    Removed — visible only to you
+                  </p>
+                  <ul className="course-list">
+                    {removedMaterials.map((row) => (
+                      <li key={row.id}>
+                        <button
+                          type="button"
+                          className="course-row"
+                          onClick={() => setSelectedMaterial(row)}
+                        >
+                          <span className="title">{row.title}</span>
+                          <span className="credits">Removed</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
               )}
             </>
           )}
@@ -357,11 +411,33 @@ export function CoursePage({ authorId }: CoursePageProps) {
               <p className="detail-body">{selectedIntel.advice}</p>
             </>
           )}
+          <ModerationActions
+            targetType="exam_intel"
+            targetId={selectedIntel.id}
+            authorId={selectedIntel.author_id}
+            currentUserId={authorId}
+            removedAt={selectedIntel.removed_at}
+            removedNote={selectedIntel.removed_note}
+            onEdit={() => {
+              setEditingIntel(selectedIntel)
+              setSelectedIntel(null)
+            }}
+            onDeleted={() => {
+              setSelectedIntel(null)
+              refetchExamIntel(course.id)
+            }}
+          />
         </DetailModal>
       )}
 
       {selectedMaterial && (
-        <DetailModal title={selectedMaterial.title} onClose={() => setSelectedMaterial(null)}>
+        <DetailModal
+          title={selectedMaterial.title}
+          onClose={() => {
+            setSelectedMaterial(null)
+            setFileError(null)
+          }}
+        >
           <dl className="detail-list">
             <dt>Type</dt>
             <dd>{selectedMaterial.type}</dd>
@@ -381,6 +457,11 @@ export function CoursePage({ authorId }: CoursePageProps) {
           {selectedMaterial.body_md && (
             <p className="detail-body">{selectedMaterial.body_md}</p>
           )}
+          {fileError && (
+            <span className="error" role="alert">
+              {fileError}
+            </span>
+          )}
           {selectedMaterial.file_path && (
             <button
               type="button"
@@ -391,6 +472,22 @@ export function CoursePage({ authorId }: CoursePageProps) {
               View attached file
             </button>
           )}
+          <ModerationActions
+            targetType="materials"
+            targetId={selectedMaterial.id}
+            authorId={selectedMaterial.author_id}
+            currentUserId={authorId}
+            removedAt={selectedMaterial.removed_at}
+            removedNote={selectedMaterial.removed_note}
+            onEdit={() => {
+              setEditingMaterial(selectedMaterial)
+              setSelectedMaterial(null)
+            }}
+            onDeleted={() => {
+              setSelectedMaterial(null)
+              refetchMaterials(course.id)
+            }}
+          />
         </DetailModal>
       )}
     </div>
