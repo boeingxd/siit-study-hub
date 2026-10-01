@@ -40,6 +40,25 @@ export function CoursePage({ authorId }: CoursePageProps) {
   const [selectedIntel, setSelectedIntel] = useState<ExamIntelRow | null>(null)
   const [selectedMaterial, setSelectedMaterial] = useState<MaterialRow | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [highlightId, setHighlightId] = useState<string | null>(null)
+
+  // After a successful save: confirm it, and mark the saved row so the user
+  // can see where it landed. A new row is the newest one (list is ordered
+  // newest-first); an edited row keeps its id.
+  function announceSaved(message: string, savedId: string | undefined, rows: { id: string }[]) {
+    setNotice(message)
+    setHighlightId(savedId ?? rows[0]?.id ?? null)
+  }
+
+  useEffect(() => {
+    if (!highlightId) return
+    document
+      .querySelector('.course-row.just-saved')
+      ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    const t = window.setTimeout(() => setHighlightId(null), 4000)
+    return () => window.clearTimeout(t)
+  }, [highlightId])
 
   useEffect(() => {
     if (!code) return
@@ -66,7 +85,10 @@ export function CoursePage({ authorId }: CoursePageProps) {
       .select(EXAM_INTEL_COLUMNS)
       .eq('course_id', courseId)
       .order('created_at', { ascending: false })
-      .then(({ data }) => setExamIntel(data ?? []))
+      .then(({ data }) => {
+        setExamIntel(data ?? [])
+        return data ?? []
+      })
   }, [])
 
   const refetchMaterials = useCallback((courseId: string) => {
@@ -75,7 +97,10 @@ export function CoursePage({ authorId }: CoursePageProps) {
       .select(MATERIALS_COLUMNS)
       .eq('course_id', courseId)
       .order('created_at', { ascending: false })
-      .then(({ data }) => setMaterials(data ?? []))
+      .then(({ data }) => {
+        setMaterials(data ?? [])
+        return data ?? []
+      })
   }, [])
 
   useEffect(() => {
@@ -173,6 +198,15 @@ export function CoursePage({ authorId }: CoursePageProps) {
         </div>
       </div>
 
+      {notice && (
+        <div className="notice" role="status">
+          <span>{notice}</span>
+          <button type="button" className="btn-secondary" onClick={() => setNotice(null)}>
+            Dismiss
+          </button>
+        </div>
+      )}
+
       <div className="tabs" role="tablist">
         <button
           type="button"
@@ -204,8 +238,15 @@ export function CoursePage({ authorId }: CoursePageProps) {
               initial={editingIntel ?? undefined}
               onCancel={closeIntelForm}
               onSubmitted={() => {
+                const editedId = editingIntel?.id
                 closeIntelForm()
-                refetchExamIntel(course.id)
+                refetchExamIntel(course.id).then((rows) =>
+                  announceSaved(
+                    editedId ? 'Changes saved.' : `Exam intel added for ${course.code} — thanks!`,
+                    editedId,
+                    rows,
+                  ),
+                )
               }}
             />
           ) : (
@@ -243,7 +284,7 @@ export function CoursePage({ authorId }: CoursePageProps) {
                       <li key={row.id}>
                         <button
                           type="button"
-                          className="course-row"
+                          className={`course-row${row.id === highlightId ? ' just-saved' : ''}`}
                           onClick={() => setSelectedIntel(row)}
                         >
                           <span className="title">
@@ -296,8 +337,15 @@ export function CoursePage({ authorId }: CoursePageProps) {
               initial={editingMaterial ?? undefined}
               onCancel={closeMaterialsForm}
               onSubmitted={() => {
+                const editedId = editingMaterial?.id
                 closeMaterialsForm()
-                refetchMaterials(course.id)
+                refetchMaterials(course.id).then((rows) =>
+                  announceSaved(
+                    editedId ? 'Changes saved.' : `Materials added for ${course.code} — thanks!`,
+                    editedId,
+                    rows,
+                  ),
+                )
               }}
             />
           ) : (
@@ -325,7 +373,7 @@ export function CoursePage({ authorId }: CoursePageProps) {
                     <li key={row.id}>
                       <button
                         type="button"
-                        className="course-row"
+                        className={`course-row${row.id === highlightId ? ' just-saved' : ''}`}
                         onClick={() => setSelectedMaterial(row)}
                       >
                         <span className="title">{row.title}</span>

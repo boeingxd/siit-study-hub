@@ -6,6 +6,11 @@ export interface Course {
   credits: number | null
 }
 
+export interface CourseWithCounts extends Course {
+  intelCount: number | null
+  materialsCount: number | null
+}
+
 export interface ExamIntelRow {
   id: string
   author_id: string

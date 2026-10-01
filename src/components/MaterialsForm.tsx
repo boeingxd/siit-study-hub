@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
+import { CancelButton } from './CancelButton'
 import { supabase } from '../lib/supabaseClient'
 import type { MaterialRow } from '../lib/types'
 import { safeFileName } from '../lib/moderation'
@@ -37,6 +38,7 @@ export function MaterialsForm({
   const [removeExistingFile, setRemoveExistingFile] = useState(false)
   const [creditByName, setCreditByName] = useState(initial?.credit_by_name ?? false)
   const [submitting, setSubmitting] = useState(false)
+  const [dirty, setDirty] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const existingFileName = initial?.file_path?.split('/').pop() ?? null
@@ -145,7 +147,7 @@ export function MaterialsForm({
   }
 
   return (
-    <form className="intel-form" onSubmit={handleSubmit}>
+    <form className="intel-form" onSubmit={handleSubmit} onChange={() => setDirty(true)}>
       {error && (
         <span className="error" role="alert">
           {error}
@@ -238,9 +240,7 @@ export function MaterialsForm({
         <button type="submit" className="btn-primary" disabled={submitting}>
           {submitting ? 'Saving…' : initial ? 'Save changes' : 'Submit'}
         </button>
-        <button type="button" className="btn-secondary" onClick={onCancel}>
-          Cancel
-        </button>
+        <CancelButton dirty={dirty} onCancel={onCancel} />
       </div>
     </form>
   )

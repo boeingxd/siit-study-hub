@@ -390,6 +390,36 @@ button.course-row {
   white-space: nowrap;
 }
 
+.content-status {
+  font-size: 13px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.content-status.empty {
+  color: var(--ink-muted);
+}
+
+.filter-chip {
+  margin: var(--space-3) 0;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--accent);
+  background: rgba(191, 215, 48, 0.2);
+  color: var(--ink);
+}
+
+.course-row.just-saved {
+  background: linear-gradient(to right, rgba(191, 215, 48, 0.45), rgba(191, 215, 48, 0) 80%);
+}
+
 .empty-note {
   padding: var(--space-6) 0;
   color: var(--ink-muted);
